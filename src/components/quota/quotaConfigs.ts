@@ -248,14 +248,13 @@ const buildCodexQuotaWindows = (payload: CodexUsagePayload, t: TFunction): Codex
     labelKey: string | undefined,
     labelParams: Record<string, string | number> | undefined,
     window?: CodexUsageWindow | null,
-    limitReached?: boolean,
-    allowed?: boolean
+    _limitReached?: boolean,
+    _allowed?: boolean
   ) => {
     if (!window) return;
     const resetLabel = formatCodexResetLabel(window);
     const usedPercentRaw = normalizeNumberValue(window.used_percent ?? window.usedPercent);
-    const isLimitReached = Boolean(limitReached) || allowed === false;
-    const usedPercent = usedPercentRaw ?? (isLimitReached && resetLabel !== '-' ? 100 : null);
+    const usedPercent = usedPercentRaw ?? null;
     windows.push({
       id,
       label,
