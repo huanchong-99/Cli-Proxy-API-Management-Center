@@ -55,6 +55,40 @@
   margin: 0;
 }
 
+.dateRangePanel {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: $radius-sm;
+  flex-wrap: wrap;
+}
+
+.dateLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.dateInput {
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-sm;
+  background: var(--input-bg, var(--card-bg));
+  color: var(--text-primary);
+  font-size: 13px;
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary-color);
+  }
+}
+
 .errorBox {
   padding: 10px;
   background-color: rgba($error-color, 0.1);

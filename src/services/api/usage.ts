@@ -22,6 +22,13 @@ export interface UsageImportResponse {
   [key: string]: unknown;
 }
 
+export interface PruneResponse {
+  removed_requests?: number;
+  removed_days?: number;
+  total_requests?: number;
+  [key: string]: unknown;
+}
+
 export const usageApi = {
   /**
    * 获取使用统计原始数据
@@ -38,6 +45,16 @@ export const usageApi = {
    */
   importUsage: (payload: unknown) =>
     apiClient.post<UsageImportResponse>('/usage/import', payload, { timeout: USAGE_TIMEOUT_MS }),
+
+  /**
+   * 清除失败记录
+   */
+  pruneFailedRecords: (startDate?: string, endDate?: string) =>
+    apiClient.post<PruneResponse>('/usage/prune', {
+      failed_only: true,
+      ...(startDate ? { start_date: startDate } : {}),
+      ...(endDate ? { end_date: endDate } : {}),
+    }, { timeout: USAGE_TIMEOUT_MS }),
 
   /**
    * 计算密钥成功/失败统计，必要时会先获取 usage 数据

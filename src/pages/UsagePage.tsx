@@ -33,6 +33,7 @@ import {
   useSparklines,
   useChartData
 } from '@/components/usage';
+import { usageApi } from '@/services/api/usage';
 import {
   getModelNamesFromUsage,
   getApiStats,
@@ -122,6 +123,11 @@ export function UsagePage() {
   const isDark = resolvedTheme === 'dark';
   const config = useConfigStore((state) => state.config);
 
+  const [pruning, setPruning] = useState(false);
+  const [pruneStart, setPruneStart] = useState('');
+  const [pruneEnd, setPruneEnd] = useState('');
+  const [showDateRange, setShowDateRange] = useState(false);
+
   // Data hook
   const {
     usage,
@@ -140,6 +146,46 @@ export function UsagePage() {
   } = useUsageData();
 
   useHeaderRefresh(loadUsage);
+
+  const handleClearAllFailed = useCallback(async () => {
+    if (!window.confirm(t('usage_stats.clear_failed_confirm'))) return;
+    setPruning(true);
+    try {
+      const res = await usageApi.pruneFailedRecords();
+      const removed = res?.removed_requests ?? 0;
+      if (removed > 0) {
+        alert(t('usage_stats.clear_failed_success', { count: removed }));
+        await loadUsage();
+      } else {
+        alert(t('usage_stats.clear_failed_none'));
+      }
+    } catch (e) {
+      alert(String(e));
+    } finally {
+      setPruning(false);
+    }
+  }, [t, loadUsage]);
+
+  const handleClearFailedRange = useCallback(async () => {
+    if (!pruneStart || !pruneEnd) return;
+    if (!window.confirm(t('usage_stats.clear_failed_range_confirm', { start: pruneStart, end: pruneEnd }))) return;
+    setPruning(true);
+    try {
+      const res = await usageApi.pruneFailedRecords(pruneStart, pruneEnd);
+      const removed = res?.removed_requests ?? 0;
+      if (removed > 0) {
+        alert(t('usage_stats.clear_failed_success', { count: removed }));
+        await loadUsage();
+      } else {
+        alert(t('usage_stats.clear_failed_none'));
+      }
+    } catch (e) {
+      alert(String(e));
+    } finally {
+      setPruning(false);
+      setShowDateRange(false);
+    }
+  }, [t, pruneStart, pruneEnd, loadUsage]);
 
   // Chart lines state
   const [chartLines, setChartLines] = useState<string[]>(loadChartLines);
@@ -248,6 +294,23 @@ export function UsagePage() {
             />
           </div>
           <Button
+            variant="danger"
+            size="sm"
+            onClick={handleClearAllFailed}
+            loading={pruning}
+            disabled={loading || pruning}
+          >
+            {t('usage_stats.clear_failed')}
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => setShowDateRange(!showDateRange)}
+            disabled={loading || pruning}
+          >
+            {t('usage_stats.clear_failed_range')}
+          </Button>
+          <Button
             variant="secondary"
             size="sm"
             onClick={handleExport}
@@ -287,6 +350,28 @@ export function UsagePage() {
           )}
         </div>
       </div>
+
+      {showDateRange && (
+        <div className={styles.dateRangePanel}>
+          <label className={styles.dateLabel}>
+            {t('usage_stats.date_start')}
+            <input type="date" value={pruneStart} onChange={(e) => setPruneStart(e.target.value)} className={styles.dateInput} />
+          </label>
+          <label className={styles.dateLabel}>
+            {t('usage_stats.date_end')}
+            <input type="date" value={pruneEnd} onChange={(e) => setPruneEnd(e.target.value)} className={styles.dateInput} />
+          </label>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={handleClearFailedRange}
+            loading={pruning}
+            disabled={!pruneStart || !pruneEnd || pruning}
+          >
+            {t('usage_stats.clear_failed_range')}
+          </Button>
+        </div>
+      )}
 
       {error && <div className={styles.errorBox}>{error}</div>}
 
